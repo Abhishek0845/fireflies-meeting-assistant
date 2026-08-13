@@ -2,6 +2,9 @@
 
 import { useEffect, useState, useRef } from "react";
 import { getMeetings, createMeeting, Meeting } from "@/lib/api";
+import Sidebar from "@/components/Sidebar";
+import HomeMiddle from "@/components/HomeMiddle";
+
 
 // ─── SVG Icons ──────────────────────────────────────────────────────────────
 const HomeIcon = () => (
@@ -399,7 +402,7 @@ export default function Home() {
 
   // ─── Right Sidebar (Ask Fred) ─────────────────────────────────────────────
   const RightSidebar = (
-    <aside className="w-72 bg-white border-l border-[#E5E7EB] flex flex-col shrink-0 overflow-hidden">
+    <aside className="hidden xl:flex w-72 bg-white border-l border-[#E5E7EB] flex-col shrink-0 overflow-hidden">
       {/* Ask Fred Header */}
       <div className="flex items-center justify-between px-4 py-3 border-b border-[#E5E7EB]">
         <div className="flex items-center gap-2">
@@ -491,171 +494,14 @@ export default function Home() {
   const HomeView = (
     <div className="flex-1 flex overflow-hidden">
       {/* Main scroll area */}
-      <div className="flex-1 overflow-y-auto">
-        <div className="max-w-3xl mx-auto px-8 py-8">
-
-          {/* Welcome Card */}
-          <div
-            className="rounded-2xl mb-8 overflow-hidden border border-[#E5E7EB] shadow-sm"
-            style={{ background: "linear-gradient(135deg, #F0EEFF 0%, #FEF3E8 100%)" }}
-          >
-            <div className="flex items-center justify-between px-8 py-6">
-              <div>
-                <h1 className="text-xl font-bold text-[#172033] mb-1.5">Welcome Aboard, Abhishek!</h1>
-                <p className="text-sm text-[#64748B] max-w-xs leading-relaxed">
-                  Fireflies is now ready to automate your meetings and streamline your workflows.
-                </p>
-              </div>
-              <div className="w-36 h-24 rounded-xl overflow-hidden shadow-md border border-white/60 shrink-0 ml-4 bg-[#172033] flex items-center justify-center relative">
-                {/* Video placeholder thumbnail */}
-                <div className="absolute inset-0 bg-gradient-to-br from-[#1E1B4B] to-[#2D1B69]" />
-                <div className="relative z-10 flex flex-col items-center gap-1">
-                  <div className="w-8 h-8 rounded-full bg-[#6D1A75] flex items-center justify-center shadow-lg">
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="white">
-                      <polygon points="5 3 19 12 5 21 5 3"/>
-                    </svg>
-                  </div>
-                  <span className="text-[9px] text-white/70">Fireflies · Product Demo</span>
-                </div>
-                {/* Decorative dots */}
-                <div className="absolute bottom-2 left-2 flex gap-1">
-                  <div className="w-1.5 h-1.5 rounded-full bg-white/20" />
-                  <div className="w-1.5 h-1.5 rounded-full bg-white/40" />
-                  <div className="w-1.5 h-1.5 rounded-full bg-white/20" />
-                </div>
-              </div>
-            </div>
-          </div>
-
-          {/* Quick Start */}
-          <h2 className="text-sm font-semibold text-[#172033] mb-1">Quick Start</h2>
-          <p className="text-xs text-[#64748B] mb-4">Capture your first meeting or upload a recording to see Fireflies in action.</p>
-          <div className="grid grid-cols-3 gap-3 mb-8">
-            <button
-              disabled
-              className="bg-white px-4 py-3.5 rounded-xl border border-[#E5E7EB] shadow-sm text-left flex items-center justify-between group hover:border-[#94A3B8] transition-colors cursor-not-allowed"
-            >
-              <div className="flex items-center gap-3">
-                <div className="w-8 h-8 rounded-lg bg-[#FFF7ED] border border-[#FED7AA] flex items-center justify-center text-orange-400 shrink-0">
-                  <CalendarIcon />
-                </div>
-                <span className="text-sm font-medium text-[#172033]">Schedule Meeting</span>
-              </div>
-              <ChevronRight />
-            </button>
-            <button
-              disabled
-              className="bg-white px-4 py-3.5 rounded-xl border border-[#E5E7EB] shadow-sm text-left flex items-center justify-between group hover:border-[#94A3B8] transition-colors cursor-not-allowed"
-            >
-              <div className="flex items-center gap-3">
-                <div className="w-8 h-8 rounded-lg bg-[#F0FDF4] border border-[#BBF7D0] flex items-center justify-center text-green-500 shrink-0">
-                  <UploadIcon />
-                </div>
-                <span className="text-sm font-medium text-[#172033]">Upload File</span>
-              </div>
-              <ChevronRight />
-            </button>
-            <button
-              onClick={() => setIsModalOpen(true)}
-              className="bg-white px-4 py-3.5 rounded-xl border border-[#6D1A75]/30 shadow-sm text-left flex items-center justify-between group hover:border-[#6D1A75] hover:bg-[#FDFAFF] transition-colors"
-            >
-              <div className="flex items-center gap-3">
-                <div className="w-8 h-8 rounded-lg bg-[#F3EAF5] border border-[#6D1A75]/20 flex items-center justify-center text-[#6D1A75] shrink-0">
-                  <CameraIcon />
-                </div>
-                <span className="text-sm font-medium text-[#6D1A75] group-hover:text-[#4F1457]">Capture Meeting</span>
-              </div>
-              <span className="text-[#6D1A75]"><ChevronRight /></span>
-            </button>
-          </div>
-
-          {/* Recent / Upcoming / AI Feed tabs */}
-          <div className="flex items-center justify-between mb-3">
-            <div className="flex gap-1">
-              {(["recent", "upcoming", "aifeed"] as const).map((tab) => (
-                <button
-                  key={tab}
-                  onClick={() => tab === "recent" && setActiveHomeTab(tab)}
-                  disabled={tab !== "recent"}
-                  className={`px-3 py-1.5 text-sm rounded-md font-medium transition-colors ${
-                    activeHomeTab === tab
-                      ? "bg-[#F3EAF5] text-[#6D1A75]"
-                      : "text-[#94A3B8] hover:text-[#64748B]"
-                  } ${tab !== "recent" ? "cursor-not-allowed" : "cursor-pointer"}`}
-                >
-                  {tab === "recent" ? "Recent" : tab === "upcoming" ? "Upcoming" : "AI Feed"}
-                </button>
-              ))}
-            </div>
-            <button disabled className="text-xs text-[#94A3B8] flex items-center gap-1 cursor-not-allowed hover:text-[#64748B]">
-              <SettingsIcon /> <span>Settings</span>
-            </button>
-          </div>
-
-          {/* Meeting list */}
-          <div className="space-y-px mb-10">
-            {loading ? (
-              <div className="py-8 text-center text-sm text-[#94A3B8]">Loading...</div>
-            ) : meetings.length === 0 ? (
-              <div className="py-8 text-center text-sm text-[#94A3B8]">No meetings yet. Capture your first one!</div>
-            ) : (
-              meetings.slice(0, 5).map((m) => (
-                <div
-                  key={m.id}
-                  onClick={() => (window.location.href = `/meetings/${m.id}`)}
-                  className="flex items-center gap-3 py-3 px-2 rounded-lg hover:bg-[#FAFAFB] cursor-pointer transition-colors group"
-                >
-                  <div className="w-8 h-8 rounded-lg bg-[#6D1A75] flex items-center justify-center text-white text-xs font-bold shrink-0">
-                    F
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm font-medium text-[#172033] truncate group-hover:text-[#6D1A75] transition-colors">
-                      {m.title}
-                    </p>
-                    <p className="text-xs text-[#94A3B8]">{formatDateTime(m.meeting_date)}</p>
-                  </div>
-                  <span className="text-xs text-[#94A3B8] shrink-0">{formatDuration(m.duration_seconds)}</span>
-                </div>
-              ))
-            )}
-          </div>
-
-          {/* Try More */}
-          <h2 className="text-sm font-semibold text-[#172033] mb-4">Try More</h2>
-          <div className="grid grid-cols-2 gap-4">
-            <div className="bg-white rounded-xl border border-[#E5E7EB] shadow-sm p-5">
-              <div className="text-[#64748B] mb-3">
-                <MonitorIcon />
-              </div>
-              <h3 className="text-sm font-semibold text-[#172033] mb-1.5">Desktop App</h3>
-              <p className="text-xs text-[#64748B] mb-4 leading-relaxed">
-                Capture conversations without any bot present in your meeting.
-              </p>
-              <button
-                disabled
-                className="flex items-center gap-2 bg-[#6D1A75] text-white text-xs font-medium px-3 py-1.5 rounded-lg cursor-not-allowed opacity-80"
-              >
-                <DownloadIcon />
-                Download
-              </button>
-            </div>
-            <div className="bg-white rounded-xl border border-[#E5E7EB] shadow-sm p-5">
-              <div className="text-[#64748B] mb-3">
-                <SmartphoneIcon />
-              </div>
-              <h3 className="text-sm font-semibold text-[#172033] mb-1.5">Mobile App</h3>
-              <p className="text-xs text-[#64748B] mb-4 leading-relaxed">
-                Record in-person conversations and review meetings on the go.
-              </p>
-              <div className="flex items-center gap-2">
-                <button disabled className="w-7 h-7 rounded-md bg-[#FAFAFB] border border-[#E5E7EB] flex items-center justify-center text-lg cursor-not-allowed">🍎</button>
-                <button disabled className="w-7 h-7 rounded-md bg-[#FAFAFB] border border-[#E5E7EB] flex items-center justify-center text-lg cursor-not-allowed">▶</button>
-              </div>
-            </div>
-          </div>
-
-          <div className="h-8" />
-        </div>
+      <div className="flex-1 overflow-y-auto bg-white">
+        <HomeMiddle
+          meetings={meetings}
+          loading={loading}
+          onUploadClick={() => setIsModalOpen(true)}
+          onCaptureClick={() => setIsModalOpen(true)}
+          onScheduleClick={() => setIsModalOpen(true)}
+        />
       </div>
 
       {/* Right Sidebar */}
@@ -667,7 +513,7 @@ export default function Home() {
   const MeetingsView = (
     <div className="flex-1 flex overflow-hidden">
       {/* Left channels sidebar */}
-      <aside className="w-52 bg-white border-r border-[#E5E7EB] flex flex-col shrink-0">
+      <aside className="hidden lg:flex w-52 bg-white border-r border-[#E5E7EB] flex-col shrink-0">
         {/* Search channels */}
         <div className="px-3 py-3 border-b border-[#E5E7EB]">
           <div className="relative">
@@ -801,56 +647,58 @@ export default function Home() {
           ) : (
             /* Meetings table */
             <div className="bg-white rounded-xl border border-[#E5E7EB] shadow-sm overflow-hidden">
-              <table className="w-full">
-                <thead>
-                  <tr className="border-b border-[#E5E7EB] bg-[#FAFAFB]">
-                    <th className="px-5 py-3 text-left text-[11px] font-semibold text-[#94A3B8] uppercase tracking-wider">Name</th>
-                    <th className="px-5 py-3 text-left text-[11px] font-semibold text-[#94A3B8] uppercase tracking-wider">Date</th>
-                    <th className="px-5 py-3 text-left text-[11px] font-semibold text-[#94A3B8] uppercase tracking-wider">Duration</th>
-                    <th className="px-5 py-3 text-left text-[11px] font-semibold text-[#94A3B8] uppercase tracking-wider">Participants</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-[#E5E7EB]">
-                  {filteredSidebarMeetings.map((m) => {
-                    const clickable = activeMeetingTab === "my";
-                    return (
-                      <tr
-                        key={m.id}
-                        onClick={() => clickable && (window.location.href = `/meetings/${m.id}`)}
-                        className={`transition-colors ${clickable ? "hover:bg-[#FAFAFB] cursor-pointer" : "cursor-default"}`}
-                      >
-                        <td className="px-5 py-3.5">
-                          <div className="flex items-center gap-3">
-                            <div className="w-8 h-8 rounded-lg bg-[#6D1A75] flex items-center justify-center text-white text-xs font-bold shrink-0">
-                              F
-                            </div>
-                            <div>
-                              <p className={`text-sm font-medium ${clickable ? "text-[#172033] hover:text-[#6D1A75]" : "text-[#172033]"}`}>{m.title}</p>
-                              <p className="text-xs text-[#94A3B8] truncate max-w-xs">{m.summary?.slice(0, 60)}...</p>
-                            </div>
-                          </div>
-                        </td>
-                        <td className="px-5 py-3.5 text-sm text-[#64748B] whitespace-nowrap">{formatDate(m.meeting_date)}</td>
-                        <td className="px-5 py-3.5 text-sm text-[#64748B] whitespace-nowrap">{formatDuration(m.duration_seconds)}</td>
-                        <td className="px-5 py-3.5">
-                          <div className="flex -space-x-1.5">
-                            {m.participants.slice(0, 4).map((p, i) => (
-                              <div key={i} title={p.name} className="w-7 h-7 rounded-full bg-[#F3EAF5] border-2 border-white flex items-center justify-center text-[10px] font-bold text-[#6D1A75]">
-                                {p.name.charAt(0).toUpperCase()}
+              <div className="overflow-x-auto">
+                <table className="w-full">
+                  <thead>
+                    <tr className="border-b border-[#E5E7EB] bg-[#FAFAFB]">
+                      <th className="px-5 py-3 text-left text-[11px] font-semibold text-[#94A3B8] uppercase tracking-wider">Name</th>
+                      <th className="px-5 py-3 text-left text-[11px] font-semibold text-[#94A3B8] uppercase tracking-wider">Date</th>
+                      <th className="px-5 py-3 text-left text-[11px] font-semibold text-[#94A3B8] uppercase tracking-wider">Duration</th>
+                      <th className="px-5 py-3 text-left text-[11px] font-semibold text-[#94A3B8] uppercase tracking-wider">Participants</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-[#E5E7EB]">
+                    {filteredSidebarMeetings.map((m) => {
+                      const clickable = activeMeetingTab === "my";
+                      return (
+                        <tr
+                          key={m.id}
+                          onClick={() => clickable && (window.location.href = `/meetings/${m.id}`)}
+                          className={`transition-colors ${clickable ? "hover:bg-[#FAFAFB] cursor-pointer" : "cursor-default"}`}
+                        >
+                          <td className="px-5 py-3.5">
+                            <div className="flex items-center gap-3">
+                              <div className="w-8 h-8 rounded-lg bg-[#6D1A75] flex items-center justify-center text-white text-xs font-bold shrink-0">
+                                F
                               </div>
-                            ))}
-                            {m.participants.length > 4 && (
-                              <div className="w-7 h-7 rounded-full bg-[#FAFAFB] border-2 border-white flex items-center justify-center text-[10px] font-bold text-[#64748B]">
-                                +{m.participants.length - 4}
+                              <div>
+                                <p className={`text-sm font-medium ${clickable ? "text-[#172033] hover:text-[#6D1A75]" : "text-[#172033]"}`}>{m.title}</p>
+                                <p className="text-xs text-[#94A3B8] truncate max-w-xs">{m.summary?.slice(0, 60)}...</p>
                               </div>
-                            )}
-                          </div>
-                        </td>
-                      </tr>
-                    );
-                  })}
-                </tbody>
-              </table>
+                            </div>
+                          </td>
+                          <td className="px-5 py-3.5 text-sm text-[#64748B] whitespace-nowrap">{formatDate(m.meeting_date)}</td>
+                          <td className="px-5 py-3.5 text-sm text-[#64748B] whitespace-nowrap">{formatDuration(m.duration_seconds)}</td>
+                          <td className="px-5 py-3.5">
+                            <div className="flex -space-x-1.5">
+                              {m.participants.slice(0, 4).map((p, i) => (
+                                <div key={i} title={p.name} className="w-7 h-7 rounded-full bg-[#F3EAF5] border-2 border-white flex items-center justify-center text-[10px] font-bold text-[#6D1A75]">
+                                  {p.name.charAt(0).toUpperCase()}
+                                </div>
+                              ))}
+                              {m.participants.length > 4 && (
+                                <div className="w-7 h-7 rounded-full bg-[#FAFAFB] border-2 border-white flex items-center justify-center text-[10px] font-bold text-[#64748B]">
+                                  +{m.participants.length - 4}
+                                </div>
+                              )}
+                            </div>
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
             </div>
           )}
         </main>
@@ -953,7 +801,7 @@ export default function Home() {
       {TopNavbar}
 
       <div className="flex-1 flex overflow-hidden">
-        {IconSidebar}
+        <Sidebar activeView={activeView} setActiveView={setActiveView} onUploadClick={() => setIsModalOpen(true)} />
         {activeView === "home" ? HomeView : MeetingsView}
       </div>
 
