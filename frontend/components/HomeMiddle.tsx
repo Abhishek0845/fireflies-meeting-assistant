@@ -52,8 +52,15 @@ export default function HomeMiddle({
   };
 
   return (
-    <div className="flex flex-col items-center justify-center w-full">
-      <div className="w-full max-w-[948px] min-h-screen h-auto flex flex-col gap-10 pt-6 px-4 md:px-16 pb-8 relative bg-white text-black font-sans text-sm antialiased cursor-crosshair">
+    <div className="flex flex-col items-center justify-center w-full relative">
+      {/* Welcome Header Background Gradient (extends screen-wide) */}
+      <div 
+        className="absolute top-0 left-0 right-0 h-[280px] z-0 pointer-events-none user-select-none"
+        style={{
+          backgroundImage: "linear-gradient(rgba(255, 255, 255, 0) 0%, rgb(255, 255, 255) 100%), linear-gradient(128.58deg, rgba(17, 112, 207, 0.3) 20.583%, rgba(254, 172, 170, 0.45) 62.685%, rgba(254, 209, 170, 0.6) 96.892%, rgba(255, 255, 255, 0) 113.84%)"
+        }}
+      />
+      <div className="w-full max-w-[948px] min-h-screen h-auto flex flex-col gap-10 pt-6 px-4 md:px-16 pb-8 relative bg-transparent text-black font-sans text-sm antialiased cursor-crosshair z-10">
         
         <div className="w-full flex flex-col gap-10 scrollbar-thin">
           

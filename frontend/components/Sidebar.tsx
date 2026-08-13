@@ -15,6 +15,99 @@ export default function Sidebar({ activeView, setActiveView, onUploadClick }: Si
         className="w-[65px] min-w-[65px] h-full flex flex-col bg-white text-black border-r border-[#eaecf0] overflow-hidden font-sans text-sm antialiased"
         aria-label="Sidebar"
       >
+        {/* Custom Fireflies Logo Brand Component from TOON Specs */}
+        <div className="flex flex-row justify-center items-center relative">
+          <div className="w-16 min-w-[64px] h-12 min-h-[48px] flex flex-row justify-center items-center bg-white">
+            <a 
+              href="https://app.fireflies.ai/" 
+              aria-label="Home"
+              className="block min-w-[24px] flex-basis-auto w-auto min-h-[24px] h-auto text-[#2e90fa]"
+            >
+              <div className="flex flex-row transform matrix(1, 0, 0, 1, 0, 0) w-6 min-w-[24px] h-6 min-h-[24px]">
+                <svg width="24" height="24" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg" style={{ width: "24px", height: "24px" }}>
+                  <g id="Frame 1">
+                    <g id="Group 887">
+                      <path id="Rectangle 62" d="M11.2049 2H2V11.1374H11.2049V2Z" fill="url(#paint0_linear_1346_2397)"></path>
+                      <path id="Path 79" d="M22.1082 1.99994H12.9033V11.1373H29.9993V9.83161C29.9991 7.75445 29.1677 5.76246 27.688 4.29376C26.2083 2.82506 24.2015 1.99994 22.109 1.99994H22.1082Z" fill="url(#paint1_linear_1346_2397)"></path>
+                      <path id="Path 80" d="M2 13.0309V22.1683C2.00021 24.2454 2.83161 26.2375 4.31131 27.7062C5.79102 29.1749 7.79784 29.9999 9.89035 29.9999H11.2049V13.0309H2Z" fill="url(#paint2_linear_1346_2397)"></path>
+                      <path id="Path 81" opacity="0.18" d="M2 2L11.2049 11.1373H2V2Z" fill="url(#paint3_linear_1346_2397)"></path>
+                      <path id="Path 83" opacity="0.18" d="M2 22.1683C2.00021 24.2454 2.83161 26.2375 4.31131 27.7062C5.79102 29.1749 7.79784 29.9999 9.89035 29.9999H11.2049V13.0309L2 22.1683Z" fill="url(#paint4_linear_1346_2397)"></path>
+                      <path id="Path 84" opacity="0.18" d="M22.109 1.99994C24.2015 1.99994 26.2083 2.82506 27.688 4.29376C29.1677 5.76246 29.9991 7.75445 29.9993 9.83161V11.1373H12.9033L22.109 1.99994Z" fill="url(#paint5_linear_1346_2397)"></path>
+                      <path id="Rectangle 63" d="M22.1082 13.0309H12.9033V22.1683H22.1082V13.0309Z" fill="url(#paint6_linear_1346_2397)"></path>
+                      <path id="Path 82" opacity="0.18" d="M12.9033 13.0309L22.1082 22.1683H12.9033V13.0309Z" fill="url(#paint7_linear_1346_2397)"></path>
+                    </g>
+                  </g>
+                  <defs>
+                    <linearGradient id="paint0_linear_1346_2397" x1="24.5151" y1="25.1175" x2="-14.1777" y2="-15.536" gradientUnits="userSpaceOnUse">
+                      <stop stopColor="#E82A73"></stop>
+                      <stop offset="0.113" stopColor="#DE2D7A"></stop>
+                      <stop offset="0.3" stopColor="#C5388F"></stop>
+                      <stop offset="0.54" stopColor="#9B4AB0"></stop>
+                      <stop offset="0.818" stopColor="#6262DE"></stop>
+                      <stop offset="0.994" stopColor="#3B73FF"></stop>
+                    </linearGradient>
+                    <linearGradient id="paint1_linear_1346_2397" x1="31.0764" y1="18.8766" x2="17.9657" y2="-28.6351" gradientUnits="userSpaceOnUse">
+                      <stop stopColor="#E82A73"></stop>
+                      <stop offset="0.113" stopColor="#DE2D7A"></stop>
+                      <stop offset="0.3" stopColor="#C5388F"></stop>
+                      <stop offset="0.54" stopColor="#9B4AB0"></stop>
+                      <stop offset="0.818" stopColor="#6262DE"></stop>
+                      <stop offset="0.994" stopColor="#3B73FF"></stop>
+                    </linearGradient>
+                    <linearGradient id="paint2_linear_1346_2397" x1="18.173" y1="31.1538" x2="-28.7613" y2="16.8553" gradientUnits="userSpaceOnUse">
+                      <stop stopColor="#E82A73"></stop>
+                      <stop offset="0.113" stopColor="#DE2D7A"></stop>
+                      <stop offset="0.3" stopColor="#C5388F"></stop>
+                      <stop offset="0.54" stopColor="#9B4AB0"></stop>
+                      <stop offset="0.818" stopColor="#6262DE"></stop>
+                      <stop offset="0.994" stopColor="#3B73FF"></stop>
+                    </linearGradient>
+                    <linearGradient id="paint3_linear_1346_2397" x1="-2.50119" y1="-9.41254" x2="10.6456" y2="20.7115" gradientUnits="userSpaceOnUse">
+                      <stop stopColor="#E82A73"></stop>
+                      <stop offset="0.114" stopColor="#DE286E"></stop>
+                      <stop offset="0.303" stopColor="#C52361"></stop>
+                      <stop offset="0.544" stopColor="#9B1A4D"></stop>
+                      <stop offset="0.825" stopColor="#620F30"></stop>
+                      <stop offset="0.994" stopColor="#3D081E"></stop>
+                    </linearGradient>
+                    <linearGradient id="paint4_linear_1346_2397" x1="-1.05602" y1="1.13563" x2="28.7183" y2="20.9153" gradientUnits="userSpaceOnUse">
+                      <stop stopColor="#E82A73"></stop>
+                      <stop offset="0.114" stopColor="#DE286E"></stop>
+                      <stop offset="0.303" stopColor="#C52361"></stop>
+                      <stop offset="0.544" stopColor="#9B1A4D"></stop>
+                      <stop offset="0.825" stopColor="#620F30"></stop>
+                      <stop offset="0.994" stopColor="#3D081E"></stop>
+                    </linearGradient>
+                    <linearGradient id="paint5_linear_1346_2397" x1="-649.773" y1="644.839" x2="-644.671" y2="685.121" gradientUnits="userSpaceOnUse">
+                      <stop stopColor="#E82A73"></stop>
+                      <stop offset="0.114" stopColor="#DE286E"></stop>
+                      <stop offset="0.303" stopColor="#C52361"></stop>
+                      <stop offset="0.544" stopColor="#9B1A4D"></stop>
+                      <stop offset="0.825" stopColor="#620F30"></stop>
+                      <stop offset="0.994" stopColor="#3D081E"></stop>
+                    </linearGradient>
+                    <linearGradient id="paint6_linear_1346_2397" x1="24.6487" y1="24.9917" x2="-14.044" y2="-15.6618" gradientUnits="userSpaceOnUse">
+                      <stop stopColor="#FF3C82"></stop>
+                      <stop offset="0.103" stopColor="#F53E88"></stop>
+                      <stop offset="0.274" stopColor="#DC4598"></stop>
+                      <stop offset="0.492" stopColor="#B251B2"></stop>
+                      <stop offset="0.745" stopColor="#7961D7"></stop>
+                      <stop offset="0.994" stopColor="#3B73FF"></stop>
+                    </linearGradient>
+                    <linearGradient id="paint7_linear_1346_2397" x1="8.40213" y1="1.61838" x2="21.5489" y2="31.7424" gradientUnits="userSpaceOnUse">
+                      <stop stopColor="#E82A73"></stop>
+                      <stop offset="0.114" stopColor="#DE286E"></stop>
+                      <stop offset="0.303" stopColor="#C52361"></stop>
+                      <stop offset="0.544" stroke="currentColor" stopColor="#9B1A4D"></stop>
+                      <stop offset="0.825" stopColor="#620F30"></stop>
+                      <stop offset="0.994" stopColor="#3D081E"></stop>
+                    </linearGradient>
+                  </defs>
+                </svg>
+              </div>
+            </a>
+          </div>
+        </div>
         {/* Scrollable menu area */}
         <div className="w-16 min-w-[64px] flex-1 block relative rounded overflow-hidden">
           <div className="w-16 min-w-[64px] h-full block overflow-y-auto scrollbar-none rounded">
