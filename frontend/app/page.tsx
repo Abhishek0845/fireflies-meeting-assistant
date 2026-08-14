@@ -201,7 +201,7 @@ export default function Home() {
       localStorage.removeItem("ff_active_view");
     }
   }, []);
-  const [activeMeetingTab, setActiveMeetingTab] = useState<"my" | "all" | "autopilot">("my");
+  const [activeMeetingTab, setActiveMeetingTab] = useState<"my" | "all" | "autopilot">("all");
   const [activeHomeTab, setActiveHomeTab] = useState<"recent" | "upcoming" | "aifeed">("recent");
   const [showBanner, setShowBanner] = useState(true);
   const [fredInput, setFredInput] = useState("");
@@ -270,6 +270,8 @@ export default function Home() {
     try {
       const created = await createMeeting(meetingData);
       setMeetings((prev) => [created, ...prev]);
+      setActiveView("meetings");
+      setActiveMeetingTab("all");
       setIsModalOpen(false);
       setNewTitle(""); setNewDate(""); setNewDuration(300); setTranscriptText("");
     } catch {

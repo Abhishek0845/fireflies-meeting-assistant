@@ -1,45 +1,41 @@
 """
-Seed script — populates the database with 5 realistic meetings.
+Seed script — populates the database with realistic demo meetings.
 
 Run with:  python seed.py   (from the backend/ directory)
 
-The script is idempotent: it wipes existing meeting + user data on every run
-so you can safely re-run it to reset to a clean known state.
+The script is idempotent for normal startup use: it will only insert the seed
+records once. Use reset=True when you explicitly want to rebuild the database.
 """
+
+from datetime import datetime
 
 from database import SessionLocal, engine, Base
 import models
-from datetime import datetime
 
 Base.metadata.create_all(bind=engine)
 
 
-def seed():
-    db = SessionLocal()
+def seed_database(db):
+    if db.query(models.Meeting).count() > 0:
+        return
 
-    # ── Wipe existing data (order matters due to FK constraints) ──────────────
-    db.query(models.MeetingTopic).delete()
-    db.query(models.ActionItem).delete()
-    db.query(models.TranscriptSegment).delete()
-    db.query(models.Participant).delete()
-    db.query(models.Meeting).delete()
-    db.query(models.Topic).delete()
-    db.query(models.User).delete()
-    db.commit()
+    user = db.query(models.User).filter(models.User.id == 1).first()
+    if not user:
+        user = models.User(name="Abhishek Singh", email="abhirathore845@gmail.com")
+        db.add(user)
+        db.commit()
+        db.refresh(user)
 
-    # ── Default User ──────────────────────────────────────────────────────────
-    user = models.User(name="Abhishek Singh", email="abhirathore845@gmail.com")
-    db.add(user)
-    db.commit()
-    db.refresh(user)
-
-    # ── Topics ────────────────────────────────────────────────────────────────
-    topics = {
-        name: models.Topic(name=name)
-        for name in ["Engineering", "Product", "Design", "Marketing", "Strategy", "Customers", "Investors"]
-    }
-    db.add_all(topics.values())
-    db.commit()
+    topic_names = ["Engineering", "Product", "Design", "Marketing", "Strategy", "Customers", "Investors"]
+    topics = {}
+    for name in topic_names:
+        topic = db.query(models.Topic).filter(models.Topic.name == name).first()
+        if not topic:
+            topic = models.Topic(name=name)
+            db.add(topic)
+            db.commit()
+            db.refresh(topic)
+        topics[name] = topic
 
     # ─────────────────────────────────────────────────────────────────────────
     # MEETING 1 — Q4 Product Strategy Sync
@@ -278,8 +274,29 @@ def seed():
     # ── Final commit ──────────────────────────────────────────────────────────
     db.commit()
     print("OK: Database seeded — 5 meetings, participants, transcripts, action items, and topics.")
-    db.close()
+
+
+def seed(reset: bool = False, db=None):
+    close_db = False
+    if db is None:
+        db = SessionLocal()
+        close_db = True
+
+    if reset:
+        db.query(models.MeetingTopic).delete()
+        db.query(models.ActionItem).delete()
+        db.query(models.TranscriptSegment).delete()
+        db.query(models.Participant).delete()
+        db.query(models.Meeting).delete()
+        db.query(models.Topic).delete()
+        db.query(models.User).delete()
+        db.commit()
+
+    seed_database(db)
+
+    if close_db:
+        db.close()
 
 
 if __name__ == "__main__":
-    seed()
+    seed(reset=True)

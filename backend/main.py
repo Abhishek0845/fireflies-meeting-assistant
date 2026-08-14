@@ -29,6 +29,7 @@ from database import engine, Base, get_db, SessionLocal
 import models
 import schemas
 import crud
+from seed import seed_database
 
 logger = logging.getLogger("fireflies")
 
@@ -38,8 +39,8 @@ logger = logging.getLogger("fireflies")
 async def lifespan(app: FastAPI):
     """
     Create all tables on startup (idempotent — safe to call every time).
-    Ensure the default user (id=1) exists so create_meeting never hits a
-    FK violation on a brand-new or wiped database.
+    Ensure the default user (id=1) exists and seed the initial meeting set so
+    a fresh Render database is immediately usable.
     """
     Base.metadata.create_all(bind=engine)
     db = SessionLocal()
@@ -48,6 +49,9 @@ async def lifespan(app: FastAPI):
             db.add(models.User(name="Abhishek Singh", email="abhirathore845@gmail.com"))
             db.commit()
             logger.info("Default user created.")
+
+        seed_database(db)
+        logger.info("Meeting seed check complete.")
     finally:
         db.close()
     yield  # application runs here

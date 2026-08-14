@@ -9,7 +9,7 @@
  *   the error in the UI without parsing response bodies themselves.
  */
 
-const API_BASE = "https://fireflies-meeting-assistant-ebrb.onrender.com";
+const API_BASE = process.env.NEXT_PUBLIC_API_BASE || "http://localhost:8000";
 
 // ── Types ──────────────────────────────────────────────────────────────────────
 
