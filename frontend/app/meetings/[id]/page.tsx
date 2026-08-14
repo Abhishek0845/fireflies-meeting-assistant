@@ -275,6 +275,7 @@ export default function MeetingDetail() {
     if (!meeting) return;
     try {
       await deleteMeeting(id as string);
+      localStorage.setItem("ff_active_view", "meetings");
       router.push("/");
     } catch {
       showToast("Failed to delete meeting", "error");
@@ -334,7 +335,7 @@ export default function MeetingDetail() {
       {/* ── Top Nav ── */}
       <nav className="bg-white border-b border-[#E5E7EB] px-6 h-14 flex items-center gap-4 shrink-0 z-20">
         <button
-          onClick={() => router.push("/")}
+          onClick={() => { localStorage.setItem("ff_active_view", "meetings"); router.push("/"); }}
           className="flex items-center gap-1.5 text-sm text-[#64748B] hover:text-[#172033] font-medium"
         >
           <BackIcon />

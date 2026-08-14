@@ -223,9 +223,9 @@ export default function HomeMiddle({
                       {/* Recent Tab */}
                       <button
                         type="button"
-                        onClick={() => setActiveTab("recent")}
-                        className={`relative flex-1 flex items-center justify-center gap-[5px] z-10 rounded font-sans font-medium text-xs leading-[14px] text-center tracking-[-0.16px] select-none py-1 px-3 h-[22px] min-h-[22px] transition-colors duration-150 ${
-                          activeTab === "recent" ? "text-[#344054]" : "text-[#667085] hover:text-[#344054]"
+                        disabled
+                        className={`relative flex-1 flex items-center justify-center gap-[5px] z-10 rounded font-sans font-medium text-xs leading-[14px] text-center tracking-[-0.16px] select-none py-1 px-3 h-[22px] min-h-[22px] cursor-not-allowed ${
+                          activeTab === "recent" ? "text-[#344054]" : "text-[#667085]"
                         }`}
                       >
                         Recent
@@ -234,9 +234,9 @@ export default function HomeMiddle({
                       {/* Upcoming Tab */}
                       <button
                         type="button"
-                        onClick={() => setActiveTab("upcoming")}
-                        className={`relative flex-1 flex items-center justify-center gap-[5px] z-10 rounded font-sans font-medium text-xs leading-[14px] text-center tracking-[-0.16px] select-none py-1 px-3 h-[22px] min-h-[22px] transition-colors duration-150 ${
-                          activeTab === "upcoming" ? "text-[#344054]" : "text-[#667085] hover:text-[#344054]"
+                        disabled
+                        className={`relative flex-1 flex items-center justify-center gap-[5px] z-10 rounded font-sans font-medium text-xs leading-[14px] text-center tracking-[-0.16px] select-none py-1 px-3 h-[22px] min-h-[22px] cursor-not-allowed ${
+                          activeTab === "upcoming" ? "text-[#344054]" : "text-[#667085]"
                         }`}
                       >
                         <div className="flex justify-center items-center gap-1">Upcoming</div>
@@ -245,9 +245,9 @@ export default function HomeMiddle({
                       {/* AI Feed Tab */}
                       <button
                         type="button"
-                        onClick={() => setActiveTab("aifeed")}
-                        className={`relative flex-1 flex items-center justify-center gap-[5px] z-10 rounded font-sans font-medium text-xs leading-[14px] text-center tracking-[-0.16px] select-none py-1 px-3 h-[22px] min-h-[22px] transition-colors duration-150 ${
-                          activeTab === "aifeed" ? "text-[#344054]" : "text-[#667085] hover:text-[#344054]"
+                        disabled
+                        className={`relative flex-1 flex items-center justify-center gap-[5px] z-10 rounded font-sans font-medium text-xs leading-[14px] text-center tracking-[-0.16px] select-none py-1 px-3 h-[22px] min-h-[22px] cursor-not-allowed ${
+                          activeTab === "aifeed" ? "text-[#344054]" : "text-[#667085]"
                         }`}
                       >
                         AI Feed

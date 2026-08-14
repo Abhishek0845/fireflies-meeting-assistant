@@ -192,6 +192,15 @@ export default function Home() {
   const [creating, setCreating] = useState(false);
 
   const [activeView, setActiveView] = useState<"home" | "meetings">("home");
+
+  // Restore view from localStorage (e.g. after navigating back from a meeting)
+  useEffect(() => {
+    const stored = typeof window !== "undefined" ? localStorage.getItem("ff_active_view") : null;
+    if (stored === "meetings") {
+      setActiveView("meetings");
+      localStorage.removeItem("ff_active_view");
+    }
+  }, []);
   const [activeMeetingTab, setActiveMeetingTab] = useState<"my" | "all" | "autopilot">("my");
   const [activeHomeTab, setActiveHomeTab] = useState<"recent" | "upcoming" | "aifeed">("recent");
   const [showBanner, setShowBanner] = useState(true);
@@ -202,6 +211,7 @@ export default function Home() {
   const [filterParticipant, setFilterParticipant] = useState("");
   const [filterOrganizer, setFilterOrganizer] = useState("");
   const [filterTopic, setFilterTopic] = useState("");
+  const [sortBy, setSortBy] = useState<"none" | "date_asc" | "date_desc" | "duration_asc" | "duration_desc">("none");
   const [showFilterPanel, setShowFilterPanel] = useState(false);
   const captureRef = useRef<HTMLDivElement>(null);
   const filterRef = useRef<HTMLDivElement>(null);
@@ -317,7 +327,17 @@ export default function Home() {
 
     return matchesSearch && matchesParticipant && matchesOrganizer && matchesTopic;
   });
-  const activeFilterCount = [filterParticipant, filterOrganizer, filterTopic].filter(Boolean).length;
+
+  // Apply sort
+  const sortedMeetings = [...filteredSidebarMeetings].sort((a, b) => {
+    if (sortBy === "date_asc") return new Date(a.meeting_date).getTime() - new Date(b.meeting_date).getTime();
+    if (sortBy === "date_desc") return new Date(b.meeting_date).getTime() - new Date(a.meeting_date).getTime();
+    if (sortBy === "duration_asc") return a.duration_seconds - b.duration_seconds;
+    if (sortBy === "duration_desc") return b.duration_seconds - a.duration_seconds;
+    return 0;
+  });
+
+  const activeFilterCount = [filterParticipant, filterOrganizer, filterTopic, sortBy !== "none" ? sortBy : ""].filter(Boolean).length;
 
   // ─── Shared Top Navbar ────────────────────────────────────────────────────
   const TopNavbar = activeView === "home" ? (
@@ -430,10 +450,10 @@ export default function Home() {
       {/* Right Controls Actions Panel (s11) */}
       <div className="flex items-center gap-3 flex-grow justify-end shrink-0">
         
-        {/* Upgrade Button */}
+        {/* Upgrade Button - Disabled */}
         <button 
-          className="flex items-center justify-center bg-gradient-to-b from-white/30 to-transparent bg-[#ecfdb7] text-[#107569] border border-[#d1fad7] hover:bg-[#d1fad7] active:scale-[0.98] rounded font-['DM_Sans',sans-serif] font-semibold text-xs leading-[14px] text-center whitespace-nowrap py-1.5 px-3 h-8 shadow-sm transition-all cursor-pointer"
-          onClick={() => setIsModalOpen(true)}
+          disabled
+          className="flex items-center justify-center bg-gradient-to-b from-white/30 to-transparent bg-[#ecfdb7] text-[#107569] border border-[#d1fad7] rounded font-['DM_Sans',sans-serif] font-semibold text-xs leading-[14px] text-center whitespace-nowrap py-1.5 px-3 h-8 shadow-sm cursor-not-allowed opacity-60"
         >
           Upgrade
         </button>
@@ -462,10 +482,10 @@ export default function Home() {
           </button>
         </div>
 
-        {/* Mic outline icon button */}
+        {/* Mic outline icon button - Disabled */}
         <button 
-          className="flex items-center justify-center border border-[#eaecf0] hover:bg-gray-50 active:scale-[0.98] rounded p-1.5 h-8 w-8 shadow-sm transition-all text-[#5925DC] cursor-pointer"
-          onClick={() => setIsModalOpen(true)}
+          disabled
+          className="flex items-center justify-center border border-[#eaecf0] rounded p-1.5 h-8 w-8 shadow-sm text-[#5925DC] cursor-not-allowed opacity-50"
         >
           <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 20 20" fill="none" style={{ width: "20px", height: "20px" }}>
             <path d="M10.4164 2.16666C9.70238 2.16666 9.01759 2.45032 8.51268 2.95522C8.00777 3.46013 7.72412 4.14493 7.72412 4.85897V11.141C7.72412 11.8551 8.00777 12.5399 8.51268 13.0448C9.01759 13.5497 9.70238 13.8333 10.4164 13.8333C11.1305 13.8333 11.8153 13.5497 12.3202 13.0448C12.8251 12.5399 13.1087 11.8551 13.1087 11.141V4.85897C13.1087 4.14493 12.8251 3.46013 12.3202 2.95522C11.8153 2.45032 11.1305 2.16666 10.4164 2.16666Z" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"></path>
@@ -838,11 +858,11 @@ export default function Home() {
 
             {/* Filter Panel Dropdown */}
             {showFilterPanel && (
-              <div className="absolute top-full right-0 mt-1 w-72 bg-white border border-[#eaecf0] rounded-xl shadow-xl z-50 p-4 flex flex-col gap-3">
+              <div className="absolute top-full right-0 mt-1 w-80 bg-white border border-[#eaecf0] rounded-xl shadow-xl z-50 p-4 flex flex-col gap-3">
                 <div className="flex items-center justify-between mb-1">
-                  <span className="text-sm font-semibold text-[#101828]">Filter Meetings</span>
+                  <span className="text-sm font-semibold text-[#101828]">Filter &amp; Sort Meetings</span>
                   <button
-                    onClick={() => { setFilterParticipant(""); setFilterOrganizer(""); setFilterTopic(""); setShowFilterPanel(false); }}
+                    onClick={() => { setFilterParticipant(""); setFilterOrganizer(""); setFilterTopic(""); setSortBy("none"); setShowFilterPanel(false); }}
                     className="text-xs text-[#667085] hover:text-[#344054] cursor-pointer"
                   >Clear all</button>
                 </div>
@@ -881,6 +901,34 @@ export default function Home() {
                     placeholder="e.g. Q4 planning"
                     className="w-full border border-[#eaecf0] rounded-lg px-3 py-2 text-xs text-[#101828] placeholder-[#98a2b3] focus:outline-none focus:ring-2 focus:ring-[#7c3aed]/30 focus:border-[#7c3aed]"
                   />
+                </div>
+
+                {/* Divider */}
+                <div className="border-t border-[#eaecf0] pt-1">
+                  <label className="text-xs font-semibold text-[#344054] uppercase tracking-wide">Sort by</label>
+                </div>
+
+                {/* Sort options */}
+                <div className="grid grid-cols-2 gap-2">
+                  {([
+                    { value: "none", label: "Default" },
+                    { value: "date_desc", label: "Date: Newest" },
+                    { value: "date_asc", label: "Date: Oldest" },
+                    { value: "duration_desc", label: "Duration: Longest" },
+                    { value: "duration_asc", label: "Duration: Shortest" },
+                  ] as const).map((opt) => (
+                    <button
+                      key={opt.value}
+                      onClick={() => setSortBy(opt.value)}
+                      className={`text-xs px-3 py-1.5 rounded-lg border font-medium transition-all cursor-pointer ${
+                        sortBy === opt.value
+                          ? "bg-[#f4f3ff] text-[#5925dc] border-[#d6bbff]"
+                          : "text-[#344054] border-[#eaecf0] hover:bg-gray-50"
+                      }`}
+                    >
+                      {opt.label}
+                    </button>
+                  ))}
                 </div>
 
                 <button
@@ -985,7 +1033,7 @@ export default function Home() {
           ) : (
             /* Meetings list - styled like Fireflies */
             <div className="flex flex-col gap-0 bg-white rounded-xl border border-[#eaecf0] shadow-sm overflow-hidden divide-y divide-[#eaecf0]">
-              {filteredSidebarMeetings.map((m) => (
+              {sortedMeetings.map((m) => (
                 <div
                   key={m.id}
                   onClick={() => window.location.href = `/meetings/${m.id}`}
@@ -1125,11 +1173,16 @@ export default function Home() {
   return (
     <div className="h-screen bg-[#FAFAFB] flex flex-col overflow-hidden">
       {TrialBanner}
-      {TopNavbar}
 
       <div className="flex-1 flex overflow-hidden">
+        {/* Sidebar spans full height including where navbar would be */}
         <Sidebar activeView={activeView} setActiveView={setActiveView} onUploadClick={() => setIsModalOpen(true)} />
-        {activeView === "home" ? HomeView : MeetingsView}
+
+        {/* Right side: navbar on top + content below */}
+        <div className="flex-1 flex flex-col overflow-hidden">
+          {TopNavbar}
+          {activeView === "home" ? HomeView : MeetingsView}
+        </div>
       </div>
 
       {CreateModal}
@@ -1272,8 +1325,6 @@ export default function Home() {
           </div>
         )}
       </div>
-
-      {CreateModal}
     </div>
   );
 }
