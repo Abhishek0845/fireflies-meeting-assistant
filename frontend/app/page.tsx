@@ -180,6 +180,7 @@ const formatDateTime = (d: string) =>
 export default function Home() {
   const [meetings, setMeetings] = useState<Meeting[]>([]);
   const [loading, setLoading] = useState(true);
+  const [fetchError, setFetchError] = useState<string | null>(null);
   const [search, setSearch] = useState("");
   const [sidebarSearch, setSidebarSearch] = useState("");
 
@@ -217,18 +218,23 @@ export default function Home() {
   const filterRef = useRef<HTMLDivElement>(null);
 
   // Fetch all meetings (no server-side search – we filter client-side for advanced filters)
+  const fetchMeetings = async () => {
+    setLoading(true);
+    setFetchError(null);
+    try {
+      const data = await getMeetings(); // fetch all
+      setMeetings(data);
+    } catch (err) {
+      console.error(err);
+      setFetchError(
+        "Could not connect to the backend. Check that NEXT_PUBLIC_API_BASE is set correctly in your Netlify environment variables."
+      );
+    } finally {
+      setLoading(false);
+    }
+  };
+
   useEffect(() => {
-    const fetchMeetings = async () => {
-      setLoading(true);
-      try {
-        const data = await getMeetings(); // fetch all
-        setMeetings(data);
-      } catch (err) {
-        console.error(err);
-      } finally {
-        setLoading(false);
-      }
-    };
     fetchMeetings();
   }, []); // only on mount
 
@@ -957,6 +963,24 @@ export default function Home() {
               <div className="flex flex-col items-center gap-3">
                 <div className="w-8 h-8 border-2 border-[#5925dc] border-t-transparent rounded-full animate-spin" />
                 <div className="text-sm text-[#94A3B8]">Loading meetings...</div>
+              </div>
+            </div>
+          ) : fetchError ? (
+            <div className="flex flex-col items-center justify-center h-full text-center py-12 font-sans">
+              <div className="flex flex-col items-center gap-4 max-w-md">
+                <div className="w-12 h-12 rounded-full bg-red-100 flex items-center justify-center">
+                  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#DC2626" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/>
+                  </svg>
+                </div>
+                <span className="text-[#101828] text-base font-semibold">Backend unreachable</span>
+                <span className="text-[#667085] text-sm leading-5">{fetchError}</span>
+                <button
+                  onClick={() => fetchMeetings()}
+                  className="flex items-center gap-2 px-4 py-2 bg-[#6938ef] hover:bg-[#5925dc] text-white rounded-lg text-sm font-semibold shadow-sm cursor-pointer transition-all"
+                >
+                  Retry
+                </button>
               </div>
             </div>
           ) : filteredSidebarMeetings.length === 0 ? (
