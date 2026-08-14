@@ -18,10 +18,11 @@ export default function Sidebar({ activeView, setActiveView, onUploadClick }: Si
         {/* Custom Fireflies Logo Brand Component from TOON Specs */}
         <div className="flex flex-row justify-center items-center relative">
           <div className="w-16 min-w-[64px] h-12 min-h-[48px] flex flex-row justify-center items-center bg-white">
-            <a 
-              href="https://app.fireflies.ai/" 
+            <button 
+              type="button"
+              onClick={() => setActiveView("home")}
               aria-label="Home"
-              className="block min-w-[24px] flex-basis-auto w-auto min-h-[24px] h-auto text-[#2e90fa]"
+              className="block min-w-[24px] flex-basis-auto w-auto min-h-[24px] h-auto text-[#2e90fa] cursor-pointer"
             >
               <div className="flex flex-row transform matrix(1, 0, 0, 1, 0, 0) w-6 min-w-[24px] h-6 min-h-[24px]">
                 <svg width="24" height="24" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg" style={{ width: "24px", height: "24px" }}>
@@ -105,7 +106,7 @@ export default function Sidebar({ activeView, setActiveView, onUploadClick }: Si
                   </defs>
                 </svg>
               </div>
-            </a>
+            </button>
           </div>
         </div>
         {/* Scrollable menu area */}

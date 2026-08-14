@@ -119,16 +119,14 @@ export default function HomeMiddle({
             {/* Quick Actions Grid */}
             <div className="w-full h-auto grid grid-cols-1 md:grid-cols-3 gap-3">
               
-              {/* Schedule Meeting */}
+              {/* Schedule Meeting - Disabled */}
               <div className="w-full h-[54px] min-h-[54px] flex flex-row">
                 <button
                   type="button"
-                  onClick={onScheduleClick}
-                  disabled={!onScheduleClick}
-                  className={`w-full flex flex-row items-center justify-between pt-4 px-4 pb-4 bg-[#fdf2fa] border-[0.8px] border-solid border-[#f2f4f7] rounded-lg shadow-[0_2px_2px_0_rgba(16,24,40,0.04)] text-center overflow-hidden min-h-[54px] h-auto transition-all ${
-                    onScheduleClick ? "hover:bg-[#fce7f3] active:scale-[0.98] cursor-pointer" : "cursor-not-allowed opacity-80"
-                  }`}
-                  aria-label="Schedule Meeting"
+                  disabled
+                  title="Schedule Meeting (Coming Soon)"
+                  className="w-full flex flex-row items-center justify-between pt-4 px-4 pb-4 bg-[#fdf2fa] border-[0.8px] border-solid border-[#f2f4f7] rounded-lg shadow-[0_2px_2px_0_rgba(16,24,40,0.04)] text-center overflow-hidden min-h-[54px] h-auto cursor-not-allowed opacity-60"
+                  aria-label="Schedule Meeting (Coming Soon)"
                 >
                   <div className="flex items-center gap-3">
                     <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" className="w-5 h-5 text-pink-500">
@@ -149,13 +147,14 @@ export default function HomeMiddle({
                 </button>
               </div>
 
-              {/* Upload File */}
+              {/* Upload File - Disabled */}
               <div className="w-full h-[54px] min-h-[54px] flex flex-row">
                 <button
                   type="button"
-                  onClick={onUploadClick}
-                  className="w-full flex flex-row items-center justify-between pt-4 px-4 pb-4 bg-[#f0fdf9] border-[0.8px] border-solid border-[#f2f4f7] rounded-lg shadow-[0_2px_2px_0_rgba(16,24,40,0.04)] text-center overflow-hidden min-h-[54px] h-auto hover:bg-[#dcfce7] active:scale-[0.98] transition-all cursor-pointer"
-                  aria-label="Upload File"
+                  disabled
+                  title="Upload File (Coming Soon)"
+                  className="w-full flex flex-row items-center justify-between pt-4 px-4 pb-4 bg-[#f0fdf9] border-[0.8px] border-solid border-[#f2f4f7] rounded-lg shadow-[0_2px_2px_0_rgba(16,24,40,0.04)] text-center overflow-hidden min-h-[54px] h-auto cursor-not-allowed opacity-60"
+                  aria-label="Upload File (Coming Soon)"
                 >
                   <div className="flex items-center gap-3">
                     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" width="20" height="20" strokeWidth="1.5" fill="none" className="w-5 h-5 text-teal-600">
@@ -327,7 +326,7 @@ export default function HomeMiddle({
                         </a>
                       ) : (
                         /* Dynamic database meetings list */
-                        meetings.slice(0, 1).map((m) => (
+                        meetings.slice(0, 5).map((m) => (
                           <div
                             key={m.id}
                             onClick={() => (window.location.href = `/meetings/${m.id}`)}

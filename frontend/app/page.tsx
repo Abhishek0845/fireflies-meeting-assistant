@@ -198,13 +198,20 @@ export default function Home() {
   const [fredInput, setFredInput] = useState("");
   const [isHelpOpen, setIsHelpOpen] = useState(false);
   const [meetingSubFilter, setMeetingSubFilter] = useState<"all" | "hosted" | "shared">("all");
+  // Advanced filter state
+  const [filterParticipant, setFilterParticipant] = useState("");
+  const [filterOrganizer, setFilterOrganizer] = useState("");
+  const [filterTopic, setFilterTopic] = useState("");
+  const [showFilterPanel, setShowFilterPanel] = useState(false);
   const captureRef = useRef<HTMLDivElement>(null);
+  const filterRef = useRef<HTMLDivElement>(null);
 
+  // Fetch all meetings (no server-side search – we filter client-side for advanced filters)
   useEffect(() => {
     const fetchMeetings = async () => {
       setLoading(true);
       try {
-        const data = await getMeetings(search);
+        const data = await getMeetings(); // fetch all
         setMeetings(data);
       } catch (err) {
         console.error(err);
@@ -212,9 +219,8 @@ export default function Home() {
         setLoading(false);
       }
     };
-    const t = setTimeout(fetchMeetings, 300);
-    return () => clearTimeout(t);
-  }, [search]);
+    fetchMeetings();
+  }, []); // only on mount
 
   // Close capture menu on outside click
   useEffect(() => {
@@ -276,35 +282,49 @@ export default function Home() {
     displayedMeetings = myMeetings;
   } else if (activeMeetingTab === "all") {
     displayedMeetings = allMeetings;
-  } else if ((activeMeetingTab as string) === "autopilot") {
+  } else if (activeMeetingTab === "autopilot") {
     displayedMeetings = autopilotMeetings;
   }
 
-  // Apply subheader filters
+  // Apply hosted/shared subheader filter
   if (meetingSubFilter === "hosted") {
     displayedMeetings = displayedMeetings.filter((m) =>
       m.participants.some((p) => p.name.toLowerCase().includes("abhishek"))
     );
   } else if (meetingSubFilter === "shared") {
     displayedMeetings = displayedMeetings.filter((m) =>
-      !m.participants.some((p) => p.name.toLowerCase().includes("abhishek")) || m.title.toLowerCase().includes("quick overview")
+      !m.participants.some((p) => p.name.toLowerCase().includes("abhishek"))
     );
   }
 
-  const filteredSidebarMeetings = displayedMeetings.filter((m) =>
-    m.title.toLowerCase().includes(sidebarSearch.toLowerCase()) ||
-    m.title.toLowerCase().includes(search.toLowerCase())
-  );
+  // Apply advanced filters (participant name, organizer, topic/keyword, search)
+  const hasAdvancedFilters = search.trim() || filterParticipant.trim() || filterOrganizer.trim() || filterTopic.trim();
+  const filteredSidebarMeetings = displayedMeetings.filter((m) => {
+    const kw = search.trim().toLowerCase();
+    const matchesSearch = !kw || m.title.toLowerCase().includes(kw) || (m.summary ?? "").toLowerCase().includes(kw) ||
+      m.participants.some((p) => p.name.toLowerCase().includes(kw)) ||
+      m.transcript_segments.some((s) => s.text.toLowerCase().includes(kw));
+
+    const fp = filterParticipant.trim().toLowerCase();
+    const matchesParticipant = !fp || m.participants.some((p) => p.name.toLowerCase().includes(fp));
+
+    const fo = filterOrganizer.trim().toLowerCase();
+    // Organizer = first participant or participant whose name matches
+    const matchesOrganizer = !fo || (m.participants.length > 0 && m.participants[0].name.toLowerCase().includes(fo));
+
+    const ft = filterTopic.trim().toLowerCase();
+    const matchesTopic = !ft || m.title.toLowerCase().includes(ft) || (m.summary ?? "").toLowerCase().includes(ft);
+
+    return matchesSearch && matchesParticipant && matchesOrganizer && matchesTopic;
+  });
+  const activeFilterCount = [filterParticipant, filterOrganizer, filterTopic].filter(Boolean).length;
 
   // ─── Shared Top Navbar ────────────────────────────────────────────────────
   const TopNavbar = activeView === "home" ? (
     <header className="h-14 bg-white border-b border-[#E5E7EB] flex items-center px-4 gap-4 shrink-0 z-20">
-      {/* Logo + Breadcrumb */}
-      <div className="flex items-center gap-3 w-56 shrink-0">
-        <FirefliesLogo size={28} />
-        <span className="text-sm font-medium text-[#64748B]">
-          Home
-        </span>
+      {/* Breadcrumb only - no duplicate logo */}
+      <div className="flex items-center gap-2 w-56 shrink-0">
+        <span className="text-sm font-medium text-[#344054]">Home</span>
       </div>
 
       {/* Center Search */}
@@ -678,266 +698,334 @@ export default function Home() {
   // ─── Meetings View ────────────────────────────────────────────────────────
   const MeetingsView = (
     <div className="flex-1 flex overflow-hidden">
-      {/* Left channels sidebar (250px) */}
-      <aside className="hidden lg:flex w-[250px] min-w-[250px] bg-[#fcfcfd] border-r border-[#eaecf0] flex-col shrink-0 font-sans">
-        
-        {/* Nav items tabs block */}
-        <div className="w-[249px] min-w-[249px] h-[153px] min-h-[153px] border-b border-[#eaecf0] flex flex-col p-3 gap-1">
-          {/* Tab 1: Hosted / Shared */}
+      {/* Left channels sidebar - exact match to screenshot */}
+      <aside className="hidden lg:flex w-[220px] min-w-[220px] bg-white border-r border-[#eaecf0] flex-col shrink-0 font-sans">
+
+        {/* Nav tabs block */}
+        <div className="flex flex-col px-2 pt-3 pb-2 border-b border-[#eaecf0] gap-0.5">
+
+          {/* My Meetings */}
           <button
-            onClick={() => setActiveMeetingTab("my")}
-            className={`flex items-center gap-3 px-3 py-2.5 rounded font-sans text-sm font-semibold tracking-[-0.16px] transition-colors w-full text-left cursor-pointer ${
+            onClick={() => { setActiveMeetingTab("my"); setMeetingSubFilter("all"); }}
+            className={`flex items-center gap-2.5 px-3 py-2 rounded-md text-sm font-medium w-full text-left transition-colors ${
               activeMeetingTab === "my"
                 ? "bg-[#f4f3ff] text-[#5925dc]"
-                : "text-[#667085] hover:bg-gray-50"
+                : "text-[#344054] hover:bg-gray-50"
             }`}
           >
-            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" className="w-4 h-4 text-purple-600">
-              <path d="M4 9H20" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"></path>
-              <path d="M4 15H20" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"></path>
-              <path d="M10 3L8 21" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"></path>
-              <path d="M16 3L14 21" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"></path>
+            {/* # hash icon */}
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" className={`w-4 h-4 shrink-0 ${activeMeetingTab === "my" ? "text-[#5925dc]" : "text-[#667085]"}`}>
+              <path d="M4 9H20" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+              <path d="M4 15H20" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+              <path d="M10 3L8 21" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+              <path d="M16 3L14 21" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
             </svg>
-            <span>Hosted / Shared</span>
+            <span>My Meetings</span>
           </button>
 
-          {/* Tab 2: All */}
+          {/* All Meetings */}
           <button
-            onClick={() => setActiveMeetingTab("all")}
-            className={`flex items-center gap-3 px-3 py-2.5 rounded font-sans text-sm font-semibold tracking-[-0.16px] transition-colors w-full text-left cursor-pointer ${
+            onClick={() => { setActiveMeetingTab("all"); setMeetingSubFilter("all"); }}
+            className={`flex items-center gap-2.5 px-3 py-2 rounded-md text-sm font-medium w-full text-left transition-colors ${
               activeMeetingTab === "all"
                 ? "bg-[#f4f3ff] text-[#5925dc]"
-                : "text-[#667085] hover:bg-gray-50"
+                : "text-[#344054] hover:bg-gray-50"
             }`}
           >
-            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 20 20" fill="none" className="w-4 h-4 text-purple-600">
-              <path d="M1.66699 2.49963H6.66699C7.55105 2.49963 8.39889 2.85082 9.02401 3.47594C9.64914 4.10107 10.0003 4.94891 10.0003 5.83297V17.4996C10.0003 16.8366 9.73693 16.2007 9.26809 15.7319C8.79925 15.263 8.16337 14.9996 7.50033 14.9996H1.66699V2.49963Z" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round"></path>
-              <path d="M18.3333 2.49963H13.3333C12.4493 2.49963 11.6014 2.85082 10.9763 3.47594C10.3512 4.10107 10 4.94891 10 5.83297V17.4996C10 16.8366 10.2634 16.2007 10.7322 15.7319C11.2011 15.263 11.837 14.9996 12.5 14.9996H18.3333V2.49963Z" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round"></path>
+            {/* Grid 2x2 books icon */}
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" className={`w-4 h-4 shrink-0 ${activeMeetingTab === "all" ? "text-[#5925dc]" : "text-[#667085]"}`}>
+              <rect x="3" y="3" width="7" height="9" rx="1" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+              <rect x="14" y="3" width="7" height="9" rx="1" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+              <rect x="14" y="15" width="7" height="6" rx="1" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+              <rect x="3" y="15" width="7" height="6" rx="1" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
             </svg>
-            <span>All</span>
+            <span>All Meetings</span>
           </button>
 
-          {/* Tab 3: Autopilot */}
+          {/* Voice Agent Meetings */}
           <button
-            onClick={() => setActiveMeetingTab("autopilot")}
-            className={`flex items-center gap-3 px-3 py-2.5 rounded font-sans text-sm font-semibold tracking-[-0.16px] transition-colors w-full text-left cursor-pointer ${
+            onClick={() => { setActiveMeetingTab("autopilot"); setMeetingSubFilter("all"); }}
+            className={`flex items-center gap-2.5 px-3 py-2 rounded-md text-sm font-medium w-full text-left transition-colors ${
               activeMeetingTab === "autopilot"
                 ? "bg-[#f4f3ff] text-[#5925dc]"
-                : "text-[#667085] hover:bg-gray-50"
+                : "text-[#344054] hover:bg-gray-50"
             }`}
           >
-            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="w-4 h-4 text-purple-600">
-              <path d="M12 2a4 4 0 0 1 4 4v2h2.5A1.5 1.5 0 0 1 20 9.5V17a3 3 0 0 1-3 3H7a3 3 0 0 1-3-3V9.5A1.5 1.5 0 0 1 5.5 8H8V6a4 4 0 0 1 4-4z" strokeLinecap="round" strokeLinejoin="round"/>
-              <circle cx="9" cy="13" r="1"/>
-              <circle cx="15" cy="13" r="1"/>
-              <path d="M9 16h6" strokeLinecap="round" strokeLinejoin="round"/>
+            {/* Video/camera icon */}
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" className={`w-4 h-4 shrink-0 ${activeMeetingTab === "autopilot" ? "text-[#5925dc]" : "text-[#667085]"}`}>
+              <path d="M23 7L16 12L23 17V7Z" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+              <rect x="1" y="5" width="15" height="14" rx="2" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
             </svg>
-            <span>Autopilot</span>
+            <span>Voice Agent Meetings</span>
           </button>
+
         </div>
 
-        {/* All channels section (s10) */}
+        {/* All channels section */}
         <div className="flex-1 p-3 overflow-y-auto">
-          <div className="w-[226px] min-w-[226px] h-[192px] min-h-[192px] flex flex-col gap-2 rounded-lg bg-white border border-[#eaecf0] shadow-sm p-4 justify-between">
-            <div className="flex flex-col gap-2">
-              <span className="text-xs font-semibold text-[#344054]">All channels</span>
-              
-              {/* Channels content inner */}
-              <div className="flex flex-col items-center justify-center py-2 text-center">
-                <div className="flex justify-center mb-1 text-[#FAA7E0]">
-                  <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" style={{ width: "20px", height: "20px" }}>
-                    <path d="M4 9H20" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"></path>
-                    <path d="M4 15H20" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"></path>
-                    <path d="M10 3L8 21" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"></path>
-                    <path d="M16 3L14 21" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"></path>
-                  </svg>
-                </div>
-                <p className="text-[10px] text-[#667085] leading-relaxed max-w-[160px]">
-                  Create channels to organize your conversations
-                </p>
-              </div>
+          <div className="mb-2 px-2">
+            <span className="text-xs font-semibold text-[#667085] uppercase tracking-wider">All channels</span>
+          </div>
+          <div className="flex flex-col items-center justify-center gap-3 py-4 px-2 text-center">
+            <div className="text-[#FAA7E0]">
+              <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none">
+                <path d="M4 9H20" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                <path d="M4 15H20" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                <path d="M10 3L8 21" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                <path d="M16 3L14 21" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+              </svg>
             </div>
-
-            {/* Channel button */}
+            <p className="text-xs text-[#667085] leading-relaxed">Create channels to organize your conversations</p>
             <button
               disabled
-              className="w-full flex items-center justify-center gap-1.5 text-xs text-[#667085] hover:text-black border border-[#eaecf0] rounded-md py-1.5 hover:bg-gray-50 cursor-not-allowed"
+              className="flex items-center gap-1.5 text-xs text-[#344054] border border-[#eaecf0] rounded-md px-3 py-1.5 hover:bg-gray-50 cursor-not-allowed opacity-60"
             >
-              <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+              <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
               <span>Channel</span>
             </button>
           </div>
         </div>
       </aside>
 
+
       {/* Main panel */}
       <div className="flex-1 flex flex-col overflow-hidden">
-        {/* Sub-header with tabs */}
-        <div className="bg-white border-b border-[#eaecf0] px-6 flex items-center gap-2 shrink-0 h-12 font-sans">
-          
-          <button 
+        {/* Sub-header: Hosted by me / Shared with me + Filters */}
+        <div className="bg-white border-b border-[#eaecf0] px-4 flex items-center gap-2 shrink-0 h-11 font-sans relative">
+
+          <button
             onClick={() => setMeetingSubFilter(meetingSubFilter === "hosted" ? "all" : "hosted")}
-            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold tracking-[-0.1px] border transition-all cursor-pointer ${
+            className={`flex items-center gap-1 px-3 py-1 rounded-full text-xs font-medium border transition-all cursor-pointer ${
               meetingSubFilter === "hosted"
                 ? "bg-[#f4f3ff] text-[#5925dc] border-[#d6bbff]"
                 : "text-[#344054] border-[#eaecf0] hover:bg-gray-50"
             }`}
           >
-            <span>Hosted by me</span>
-            {meetingSubFilter === "hosted" && <span className="text-[#9855f7] text-[10px] font-bold">×</span>}
+            Hosted by me
+            {meetingSubFilter === "hosted" && <span className="ml-1 font-bold">×</span>}
           </button>
 
-          <button 
+          <button
             onClick={() => setMeetingSubFilter(meetingSubFilter === "shared" ? "all" : "shared")}
-            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold tracking-[-0.1px] border transition-all cursor-pointer ${
+            className={`flex items-center gap-1 px-3 py-1 rounded-full text-xs font-medium border transition-all cursor-pointer ${
               meetingSubFilter === "shared"
                 ? "bg-[#f4f3ff] text-[#5925dc] border-[#d6bbff]"
                 : "text-[#344054] border-[#eaecf0] hover:bg-gray-50"
             }`}
           >
-            <span>Shared with me</span>
-            {meetingSubFilter === "shared" && <span className="text-[#9855f7] text-[10px] font-bold">×</span>}
+            Shared with me
+            {meetingSubFilter === "shared" && <span className="ml-1 font-bold">×</span>}
           </button>
 
           <div className="flex-1" />
 
-          {/* Clean Filters icon dropdown action */}
-          <button 
-            onClick={() => setMeetingSubFilter("all")}
-            className="flex items-center gap-1.5 text-xs text-[#344054] border border-[#eaecf0] px-3 py-1.5 rounded-lg hover:bg-gray-50 cursor-pointer shadow-sm transition-all bg-white"
-          >
-            <FilterIcon />
-            <span>Reset Filters</span>
+          {/* Advanced Filters toggle */}
+          <div className="relative" ref={filterRef}>
+            <button
+              onClick={() => setShowFilterPanel(!showFilterPanel)}
+              className={`flex items-center gap-1.5 text-xs font-medium border px-3 py-1 rounded-lg cursor-pointer transition-all ${
+                showFilterPanel || activeFilterCount > 0
+                  ? "bg-[#f4f3ff] text-[#5925dc] border-[#d6bbff]"
+                  : "text-[#344054] border-[#eaecf0] bg-white hover:bg-gray-50"
+              }`}
+            >
+              <FilterIcon />
+              <span>Filters</span>
+              {activeFilterCount > 0 && (
+                <span className="bg-[#5925dc] text-white rounded-full text-[9px] w-4 h-4 flex items-center justify-center font-bold">{activeFilterCount}</span>
+              )}
+            </button>
+
+            {/* Filter Panel Dropdown */}
+            {showFilterPanel && (
+              <div className="absolute top-full right-0 mt-1 w-72 bg-white border border-[#eaecf0] rounded-xl shadow-xl z-50 p-4 flex flex-col gap-3">
+                <div className="flex items-center justify-between mb-1">
+                  <span className="text-sm font-semibold text-[#101828]">Filter Meetings</span>
+                  <button
+                    onClick={() => { setFilterParticipant(""); setFilterOrganizer(""); setFilterTopic(""); setShowFilterPanel(false); }}
+                    className="text-xs text-[#667085] hover:text-[#344054] cursor-pointer"
+                  >Clear all</button>
+                </div>
+
+                {/* Participant filter */}
+                <div className="flex flex-col gap-1">
+                  <label className="text-xs font-medium text-[#344054]">Participant name</label>
+                  <input
+                    type="text"
+                    value={filterParticipant}
+                    onChange={(e) => setFilterParticipant(e.target.value)}
+                    placeholder="e.g. John Smith"
+                    className="w-full border border-[#eaecf0] rounded-lg px-3 py-2 text-xs text-[#101828] placeholder-[#98a2b3] focus:outline-none focus:ring-2 focus:ring-[#7c3aed]/30 focus:border-[#7c3aed]"
+                  />
+                </div>
+
+                {/* Organizer filter */}
+                <div className="flex flex-col gap-1">
+                  <label className="text-xs font-medium text-[#344054]">Organizer</label>
+                  <input
+                    type="text"
+                    value={filterOrganizer}
+                    onChange={(e) => setFilterOrganizer(e.target.value)}
+                    placeholder="e.g. Abhishek"
+                    className="w-full border border-[#eaecf0] rounded-lg px-3 py-2 text-xs text-[#101828] placeholder-[#98a2b3] focus:outline-none focus:ring-2 focus:ring-[#7c3aed]/30 focus:border-[#7c3aed]"
+                  />
+                </div>
+
+                {/* Topic / Keyword filter */}
+                <div className="flex flex-col gap-1">
+                  <label className="text-xs font-medium text-[#344054]">Topic / Keyword</label>
+                  <input
+                    type="text"
+                    value={filterTopic}
+                    onChange={(e) => setFilterTopic(e.target.value)}
+                    placeholder="e.g. Q4 planning"
+                    className="w-full border border-[#eaecf0] rounded-lg px-3 py-2 text-xs text-[#101828] placeholder-[#98a2b3] focus:outline-none focus:ring-2 focus:ring-[#7c3aed]/30 focus:border-[#7c3aed]"
+                  />
+                </div>
+
+                <button
+                  onClick={() => setShowFilterPanel(false)}
+                  className="w-full bg-[#5925dc] hover:bg-[#4a1fc0] text-white text-xs font-semibold rounded-lg py-2 transition-colors cursor-pointer"
+                >
+                  Apply Filters
+                </button>
+              </div>
+            )}
+          </div>
+
+          {/* Search icon */}
+          <button className="w-8 h-8 flex items-center justify-center text-[#667085] hover:text-[#344054] rounded-lg hover:bg-gray-50 cursor-not-allowed" disabled title="Use top search bar">
+            <SearchIcon size={14} />
           </button>
         </div>
+
 
         {/* Content */}
         <main className="flex-1 overflow-y-auto bg-[#FAFAFB] p-6">
           {loading ? (
             <div className="flex items-center justify-center h-full">
-              <div className="text-sm text-[#94A3B8]">Loading meetings...</div>
+              <div className="flex flex-col items-center gap-3">
+                <div className="w-8 h-8 border-2 border-[#5925dc] border-t-transparent rounded-full animate-spin" />
+                <div className="text-sm text-[#94A3B8]">Loading meetings...</div>
+              </div>
             </div>
           ) : filteredSidebarMeetings.length === 0 ? (
-            /* Empty state from TOON specifications */
+            /* Empty state */
             <div className="flex flex-col items-center justify-center h-full text-center py-12 font-sans select-none">
-              <div className="w-[533px] min-w-[533px] h-[462px] min-h-[462px] flex flex-col justify-center items-center gap-6">
-                
+              <div className="flex flex-col justify-center items-center gap-6">
                 {/* Wavy documents SVG */}
                 <div className="mb-2">
                   <svg width="340" height="162" viewBox="0 0 340 162" fill="none" xmlns="http://www.w3.org/2000/svg">
                     <g filter="url(#filter0_d_903_36147)">
-                      <path d="M21 16.5C21 10.1487 26.1487 5 32.5 5H215.5C221.851 5 227 10.1487 227 16.5V137.5C227 143.851 221.851 149 215.5 149H32.5C26.1487 149 21 143.851 21 137.5V16.5Z" fill="white" stroke="#EAECF0" strokeWidth="1.5"></path>
+                      <path d="M21 16.5C21 10.1487 26.1487 5 32.5 5H215.5C221.851 5 227 10.1487 227 16.5V137.5C227 143.851 221.851 149 215.5 149H32.5C26.1487 149 21 143.851 21 137.5V16.5Z" fill="white" stroke="#EAECF0" strokeWidth="1.5"/>
                     </g>
                     <g filter="url(#filter1_d_903_36147)">
-                      <path d="M113 16.5C113 10.1487 118.149 5 124.5 5H307.5C313.851 5 319 10.1487 319 16.5V137.5C319 143.851 313.851 149 307.5 149H124.5C118.149 149 113 143.851 113 137.5V16.5Z" fill="white" stroke="#EAECF0" strokeWidth="1.5"></path>
+                      <path d="M113 16.5C113 10.1487 118.149 5 124.5 5H307.5C313.851 5 319 10.1487 319 16.5V137.5C319 143.851 313.851 149 307.5 149H124.5C118.149 149 113 143.851 113 137.5V16.5Z" fill="white" stroke="#EAECF0" strokeWidth="1.5"/>
                     </g>
-                    <rect x="144" y="27" width="138" height="6" rx="3" fill="#F4F3FF"></rect>
-                    <rect x="144" y="41" width="94" height="6" rx="3" fill="#F4F3FF"></rect>
-                    <rect x="144" y="55" width="112" height="6" rx="3" fill="#F4F3FF"></rect>
-                    <rect x="52" y="27" width="138" height="6" rx="3" fill="#F2F4F7"></rect>
-                    <rect x="52" y="41" width="94" height="6" rx="3" fill="#F2F4F7"></rect>
-                    <rect x="52" y="55" width="112" height="6" rx="3" fill="#F2F4F7"></rect>
-                    <circle cx="155" cy="85" r="11" fill="#F4F3FF"></circle>
-                    <circle cx="63" cy="85" r="11" fill="#F2F4F7"></circle>
-                    <circle cx="181" cy="85" r="11" fill="#E0F2FE"></circle>
-                    <circle cx="89" cy="85" r="11" fill="#E0F2FE"></circle>
+                    <rect x="144" y="27" width="138" height="6" rx="3" fill="#F4F3FF"/>
+                    <rect x="144" y="41" width="94" height="6" rx="3" fill="#F4F3FF"/>
+                    <rect x="144" y="55" width="112" height="6" rx="3" fill="#F4F3FF"/>
+                    <rect x="52" y="27" width="138" height="6" rx="3" fill="#F2F4F7"/>
+                    <rect x="52" y="41" width="94" height="6" rx="3" fill="#F2F4F7"/>
+                    <rect x="52" y="55" width="112" height="6" rx="3" fill="#F2F4F7"/>
+                    <circle cx="155" cy="85" r="11" fill="#F4F3FF"/>
+                    <circle cx="63" cy="85" r="11" fill="#F2F4F7"/>
+                    <circle cx="181" cy="85" r="11" fill="#E0F2FE"/>
+                    <circle cx="89" cy="85" r="11" fill="#E0F2FE"/>
                     <defs>
                       <filter id="filter0_d_903_36147" x="0.5" y="-15.5" width="247" height="186" filterUnits="userSpaceOnUse" colorInterpolationFilters="sRGB">
-                        <feFlood floodOpacity="0" result="BackgroundImageFix"></feFlood>
-                        <feColorMatrix in="SourceAlpha" type="matrix" values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 127 0" result="hardAlpha"></feColorMatrix>
-                        <feOffset dy="1"></feOffset>
-                        <feGaussianBlur stdDeviation="2"></feGaussianBlur>
-                        <feColorMatrix type="matrix" values="0 0 0 0 0.0627451 0 0 0 0 0.0941176 0 0 0 0 0.156863 0 0 0 0.05 0"></feColorMatrix>
-                        <feBlend mode="normal" in2="BackgroundImageFix" result="effect1_dropShadow_903_36147"></feBlend>
-                        <feBlend mode="normal" in="SourceGraphic" in2="effect1_dropShadow_903_36147" result="shape"></feBlend>
+                        <feFlood floodOpacity="0" result="BackgroundImageFix"/>
+                        <feColorMatrix in="SourceAlpha" type="matrix" values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 127 0" result="hardAlpha"/>
+                        <feOffset dy="1"/>
+                        <feGaussianBlur stdDeviation="2"/>
+                        <feColorMatrix type="matrix" values="0 0 0 0 0.0627451 0 0 0 0 0.0941176 0 0 0 0 0.156863 0 0 0 0.05 0"/>
+                        <feBlend mode="normal" in2="BackgroundImageFix" result="effect1_dropShadow_903_36147"/>
+                        <feBlend mode="normal" in="SourceGraphic" in2="effect1_dropShadow_903_36147" result="shape"/>
                       </filter>
                       <filter id="filter1_d_903_36147" x="92.5" y="-15.5" width="247" height="186" filterUnits="userSpaceOnUse" colorInterpolationFilters="sRGB">
-                        <feFlood floodOpacity="0" result="BackgroundImageFix"></feFlood>
-                        <feColorMatrix in="SourceAlpha" type="matrix" values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 127 0" result="hardAlpha"></feColorMatrix>
-                        <feOffset dy="1"></feOffset>
-                        <feGaussianBlur stdDeviation="2"></feGaussianBlur>
-                        <feColorMatrix type="matrix" values="0 0 0 0 0.0627451 0 0 0 0 0.0941176 0 0 0 0 0.156863 0 0 0 0.05 0"></feColorMatrix>
-                        <feBlend mode="normal" in2="BackgroundImageFix" result="effect1_dropShadow_903_36147"></feBlend>
-                        <feBlend mode="normal" in="SourceGraphic" in2="effect1_dropShadow_903_36147" result="shape"></feBlend>
+                        <feFlood floodOpacity="0" result="BackgroundImageFix"/>
+                        <feColorMatrix in="SourceAlpha" type="matrix" values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 127 0" result="hardAlpha"/>
+                        <feOffset dy="1"/>
+                        <feGaussianBlur stdDeviation="2"/>
+                        <feColorMatrix type="matrix" values="0 0 0 0 0.0627451 0 0 0 0 0.0941176 0 0 0 0 0.156863 0 0 0 0.05 0"/>
+                        <feBlend mode="normal" in2="BackgroundImageFix" result="effect1_dropShadow_903_36147"/>
+                        <feBlend mode="normal" in="SourceGraphic" in2="effect1_dropShadow_903_36147" result="shape"/>
                       </filter>
                     </defs>
                   </svg>
                 </div>
-
-                {/* Text description */}
-                <div className="w-[480px] min-w-[480px] h-[72px] min-h-[72px] flex flex-col gap-2 items-center">
-                  <span className="block text-[#101828] text-base font-semibold leading-6 tracking-[-0.32px]">Looks like you haven&apos;t recorded a meeting yet</span>
-                  <span className="block text-[#667085] text-sm leading-5 tracking-[-0.16px] max-w-sm">Once you record your first meeting with Fireflies, it&apos;ll show up right here.</span>
+                <div className="flex flex-col gap-2 items-center">
+                  <span className="block text-[#101828] text-base font-semibold leading-6">
+                    {hasAdvancedFilters ? "No meetings match your filters" : "Looks like you haven&apos;t recorded a meeting yet"}
+                  </span>
+                  <span className="block text-[#667085] text-sm leading-5 max-w-sm">
+                    {hasAdvancedFilters
+                      ? "Try adjusting your search or filter criteria."
+                      : "Once you record your first meeting with Fireflies, it&apos;ll show up right here."}
+                  </span>
                 </div>
-
-                {/* Capture button */}
-                <div className="w-[102px] min-w-[102px] h-9 min-h-[36px] flex items-center justify-center">
-                  <button 
+                {hasAdvancedFilters ? (
+                  <button
+                    onClick={() => { setSearch(""); setFilterParticipant(""); setFilterOrganizer(""); setFilterTopic(""); setMeetingSubFilter("all"); }}
+                    className="flex items-center gap-2 px-4 py-2 border border-[#eaecf0] rounded-lg text-sm font-medium text-[#344054] hover:bg-gray-50 cursor-pointer"
+                  >
+                    Clear all filters
+                  </button>
+                ) : (
+                  <button
                     onClick={() => setIsModalOpen(true)}
-                    className="w-full h-full flex flex-row justify-center items-center gap-2 pt-2 pr-3.5 pb-2 pl-3.5 bg-[#6938ef] hover:bg-[#5925dc] text-white rounded-lg shadow-sm cursor-pointer active:scale-95 transition-all text-xs font-semibold"
+                    className="flex items-center gap-2 px-4 py-2 bg-[#6938ef] hover:bg-[#5925dc] text-white rounded-lg text-sm font-semibold shadow-sm cursor-pointer transition-all"
                   >
                     <PlusIcon />
-                    <span>Capture</span>
+                    Capture
                   </button>
-                </div>
-                
+                )}
               </div>
             </div>
           ) : (
-            /* Meetings table */
-            <div className="bg-white rounded-xl border border-[#E5E7EB] shadow-sm overflow-hidden">
-              <div className="overflow-x-auto">
-                <table className="w-full">
-                  <thead>
-                    <tr className="border-b border-[#E5E7EB] bg-[#FAFAFB]">
-                      <th className="px-5 py-3 text-left text-[11px] font-semibold text-[#94A3B8] uppercase tracking-wider">Name</th>
-                      <th className="px-5 py-3 text-left text-[11px] font-semibold text-[#94A3B8] uppercase tracking-wider">Date</th>
-                      <th className="px-5 py-3 text-left text-[11px] font-semibold text-[#94A3B8] uppercase tracking-wider">Duration</th>
-                      <th className="px-5 py-3 text-left text-[11px] font-semibold text-[#94A3B8] uppercase tracking-wider">Participants</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-[#E5E7EB]">
-                    {filteredSidebarMeetings.map((m) => {
-                      const clickable = activeMeetingTab === "my";
-                      return (
-                        <tr
-                          key={m.id}
-                          onClick={() => clickable && (window.location.href = `/meetings/${m.id}`)}
-                          className={`transition-colors ${clickable ? "hover:bg-[#FAFAFB] cursor-pointer" : "cursor-default"}`}
-                        >
-                          <td className="px-5 py-3.5">
-                            <div className="flex items-center gap-3">
-                              <div className="w-8 h-8 rounded-lg bg-[#6D1A75] flex items-center justify-center text-white text-xs font-bold shrink-0">
-                                F
-                              </div>
-                              <div>
-                                <p className={`text-sm font-medium ${clickable ? "text-[#172033] hover:text-[#6D1A75]" : "text-[#172033]"}`}>{m.title}</p>
-                                <p className="text-xs text-[#94A3B8] truncate max-w-xs">{m.summary?.slice(0, 60)}...</p>
-                              </div>
+            /* Meetings list - styled like Fireflies */
+            <div className="flex flex-col gap-0 bg-white rounded-xl border border-[#eaecf0] shadow-sm overflow-hidden divide-y divide-[#eaecf0]">
+              {filteredSidebarMeetings.map((m) => (
+                <div
+                  key={m.id}
+                  onClick={() => window.location.href = `/meetings/${m.id}`}
+                  className="flex items-start gap-3 px-4 py-3.5 hover:bg-[#fafafa] cursor-pointer group transition-colors"
+                >
+                  {/* Avatar / Icon */}
+                  <div className="w-9 h-9 rounded-lg bg-gradient-to-br from-[#7c3aed] to-[#a855f7] flex items-center justify-center text-white text-sm font-bold shrink-0 mt-0.5">
+                    {m.title.charAt(0).toUpperCase()}
+                  </div>
+
+                  {/* Content */}
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-start justify-between gap-2">
+                      <p className="text-sm font-semibold text-[#101828] group-hover:text-[#5925dc] transition-colors truncate leading-5">{m.title}</p>
+                      <span className="text-[11px] text-[#98a2b3] whitespace-nowrap shrink-0">{formatDate(m.meeting_date)}</span>
+                    </div>
+                    <p className="text-xs text-[#667085] mt-0.5 line-clamp-1">{m.summary?.slice(0, 80) ?? "No summary available"}</p>
+                    <div className="flex items-center gap-2 mt-1.5">
+                      {/* Duration */}
+                      <span className="text-[11px] text-[#98a2b3] flex items-center gap-1">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                        {formatDuration(m.duration_seconds)}
+                      </span>
+                      {/* Participants */}
+                      {m.participants.length > 0 && (
+                        <div className="flex -space-x-1.5">
+                          {m.participants.slice(0, 3).map((p, i) => (
+                            <div key={i} title={p.name} className="w-4 h-4 rounded-full border border-white bg-[#e9d5ff] flex items-center justify-center text-[8px] font-bold text-[#6d28d9]">
+                              {p.name.charAt(0).toUpperCase()}
                             </div>
-                          </td>
-                          <td className="px-5 py-3.5 text-sm text-[#64748B] whitespace-nowrap">{formatDate(m.meeting_date)}</td>
-                          <td className="px-5 py-3.5 text-sm text-[#64748B] whitespace-nowrap">{formatDuration(m.duration_seconds)}</td>
-                          <td className="px-5 py-3.5">
-                            <div className="flex -space-x-1.5">
-                              {m.participants.slice(0, 4).map((p, i) => (
-                                <div key={i} title={p.name} className="w-7 h-7 rounded-full bg-[#F3EAF5] border-2 border-white flex items-center justify-center text-[10px] font-bold text-[#6D1A75]">
-                                  {p.name.charAt(0).toUpperCase()}
-                                </div>
-                              ))}
-                              {m.participants.length > 4 && (
-                                <div className="w-7 h-7 rounded-full bg-[#FAFAFB] border-2 border-white flex items-center justify-center text-[10px] font-bold text-[#64748B]">
-                                  +{m.participants.length - 4}
-                                </div>
-                              )}
-                            </div>
-                          </td>
-                        </tr>
-                      );
-                    })}
-                  </tbody>
-                </table>
-              </div>
+                          ))}
+                          {m.participants.length > 3 && (
+                            <div className="w-4 h-4 rounded-full border border-white bg-gray-100 flex items-center justify-center text-[8px] text-[#667085]">+{m.participants.length - 3}</div>
+                          )}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              ))}
             </div>
           )}
         </main>
